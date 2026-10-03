@@ -1,6 +1,6 @@
 import re
 import streamlit as st
-from model import build_data, train, features
+from model import build_data, train, features, explain
 
 LABEL_NAMES = {
     "distribute_first_only": "Distributing to only the first term",
@@ -89,6 +89,7 @@ s.setdefault("stage", "input")
 s.setdefault("history", {})  # label -> {"seen": n, "resolved": n}
 
 st.title("Re:Learn - Algebra Misconception Tutor")
+st.caption("v2: confidence, test-it-yourself, learner memory")
 
 # Learner model in the sidebar
 st.sidebar.header("Learner history")
@@ -138,6 +139,8 @@ elif s.stage == "lesson":
     st.subheader(f"Diagnosis: {LABEL_NAMES[s.label]}")
     if s.get("conf") is not None:
         st.caption(f"Diagnosis confidence: {s.conf}%")
+    a_, b_ = parse(s.q)
+    st.info(explain(s.label, a_, b_))
     st.write(LESSONS[s.label])
 
     st.markdown("#### Test it yourself")
@@ -184,152 +187,3 @@ elif s.stage == "again":
     if st.button("Retry the retest"):
         s.stage = "retest"
         st.rerun()
-
-    def parse(q):
-        m = re.match(r"(\d+)\(x([+-])(\d+)\)$", q)
-        if m:
-            return int(m.group(1)), int(m.group(3))
-        m = re.match(r"\(x\+(\d+)\)\^2$", q)
-        return 5, int(m.group(1))
-
-
-    def correct_answer(q):
-        a, b = parse(q)
-        if "^2" in q:
-            return f"x^2+{2*b}x+{b*b}"
-        if "-" in q:
-            return f"{a}x-{a*b}"
-        return f"{a}x+{a*b}"
-
-    def diagnose_conf(q, ans):
-        """Returns (label, confidence in %). Confidence is None if the model can't give probabilities."""
-        a, b = parse(q)
-        model = get_model()
-        row = [features(q, norm(ans), a, b)]
-        label = model.predict(row)[0]
-        try:
-            conf = round(100 * max(model.predict_proba(row)[0]))
-        except Exception:
-            conf = None
-        return label, conf
-
-
-    def evaluate(expr, x):
-        """Safely work out an expression like 2x+6 or (x+3)^2 for a given x."""
-        e = norm(expr).replace("^", "**")
-        e = re.sub(r"(\d)(x|\()", r"\1*\2", e)
-        e = re.sub(r"(x|\))(\d|x|\()", r"\1*\2", e)
-        if len(e) > 20 or not re.fullmatch(r"[0-9x+\-*()]+", e):
-            return None
-        if e.count("**") > 1 or "**" in e.replace("**2", ""):
-            return None
-        try:
-            return eval(e, {"__builtins__": {}}, {"x": x})
-        except Exception:
-            return None
-        
-    def diagnose(q, ans):
-        a, b = parse(q)
-        return get_model().predict([features(q, norm(ans), a, b)])[0]
-
-
-    s = st.session_state
-    s.setdefault("stage", "input")
-    s.setdefault("history", {})  # label -> {"seen": n, "resolved": n}
-
-    st.title("Re:Learn - Algebra Misconception Tutor")
-
-    # Learner model in the sidebar
-    st.sidebar.header("Learner history")
-    if not s.history:
-        st.sidebar.caption("No mistakes yet. Your progress will appear here.")
-    for lab, rec in s.history.items():
-        st.sidebar.write(f"**{LABEL_NAMES[lab]}**")
-        st.sidebar.progress(min(rec["resolved"] / rec["seen"], 1.0))
-        st.sidebar.caption(f"seen {rec['seen']}x, resolved {rec['resolved']}x")
-        if rec["seen"] >= 2 and rec["resolved"] < rec["seen"]:
-            st.sidebar.warning("Recurring habit! Worth extra practice.")
-            
-    if s.stage == "input":
-        q = st.selectbox("Expand this expression:", QUESTIONS)
-        ans = st.text_input("Your answer (example: 2x+6)")
-        if st.button("Submit") and ans:
-            if norm(ans) == correct_answer(q):
-                s.stage = "correct"
-            else:
-                label, conf = diagnose_conf(q, ans)
-                s.q, s.ans = q, ans
-                s.conf = conf
-                if label == "correct":
-                    s.stage = "unknown"
-                else:
-                    s.label = label
-                    rec = s.history.setdefault(label, {"seen": 0, "resolved": 0})
-                    rec["seen"] += 1
-                    s.stage = "lesson"
-            st.rerun()
-
-    elif s.stage == "correct":
-        st.success("Correct! Well done.")
-        if st.button("Try another"):
-            s.stage = "input"
-            st.rerun()
-
-    elif s.stage == "unknown":
-        st.warning(f"Your answer {s.ans} is not correct, but I can't tell which misconception caused it. I'm not confident enough to diagnose it.")
-        st.info(f"The correct answer is {correct_answer(s.q)}.")
-        if st.button("Try another"):
-            s.stage = "input"
-            st.rerun()
-
-    elif s.stage == "lesson":
-        st.error(f"Your answer {s.ans} is not correct.")
-        st.subheader(f"Diagnosis: {LABEL_NAMES[s.label]}")
-        if s.get("conf") is not None:
-            st.caption(f"Diagnosis confidence: {s.conf}%")
-        st.write(LESSONS[s.label])
-
-        st.markdown("#### Test it yourself")
-        x_val = st.number_input("Pick a value for x", value=1, step=1)
-        orig = evaluate(s.q, x_val)
-        mine = evaluate(s.ans, x_val)
-        good = evaluate(correct_answer(s.q), x_val)
-        show = lambda v: "?" if v is None else v
-        c1, c2, c3 = st.columns(3)
-        c1.metric(f"Original {s.q}", show(orig))
-        c2.metric("Your answer", show(mine))
-        c3.metric("Correct answer", show(good))
-        if orig is not None and mine is not None:
-            if orig == mine:
-                st.info("They match at this x. Try another value, because one match doesn't prove an answer is right.")
-            else:
-                st.error("Your answer gives a different number from the original, so they can't be equal.")
-        if st.button("I'm ready for the retest"):
-            s.stage = "retest"
-            st.rerun()
-
-    elif s.stage == "retest":
-        st.subheader("Retest: all 3 must be right")
-        answers = [st.text_input(f"Expand {q}", key=f"rt{i}") for i, q in enumerate(RETESTS[s.label])]
-        if st.button("Check my answers"):
-            right = sum(norm(a) == correct_answer(q) for a, q in zip(answers, RETESTS[s.label]))
-            if right == 3:
-                s.history[s.label]["resolved"] += 1
-                s.stage = "resolved"
-            else:
-                s.stage = "again"
-                s.right = right
-            st.rerun()
-
-    elif s.stage == "resolved":
-        st.success(f"Misconception resolved: {LABEL_NAMES[s.label]}. All 3 retest questions correct.")
-        if st.button("Start over"):
-            s.stage = "input"
-            st.rerun()
-
-    elif s.stage == "again":
-        st.warning(f"Only {s.right}/3 correct, so the misconception is NOT yet resolved. Review the lesson again.")
-        st.write(LESSONS[s.label])
-        if st.button("Retry the retest"):
-            s.stage = "retest"
-            st.rerun()
