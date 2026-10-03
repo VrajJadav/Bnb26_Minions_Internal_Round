@@ -52,7 +52,33 @@ def correct_answer(q):
         return f"{a}x-{a*b}"
     return f"{a}x+{a*b}"
 
+def diagnose_conf(q, ans):
+    """Returns (label, confidence in %). Confidence is None if the model can't give probabilities."""
+    a, b = parse(q)
+    model = get_model()
+    row = [features(q, norm(ans), a, b)]
+    label = model.predict(row)[0]
+    try:
+        conf = round(100 * max(model.predict_proba(row)[0]))
+    except Exception:
+        conf = None
+    return label, conf
 
+
+def evaluate(expr, x):
+    """Safely work out an expression like 2x+6 or (x+3)^2 for a given x."""
+    e = norm(expr).replace("^", "**")
+    e = re.sub(r"(\d)(x|\()", r"\1*\2", e)
+    e = re.sub(r"(x|\))(\d|x|\()", r"\1*\2", e)
+    if len(e) > 20 or not re.fullmatch(r"[0-9x+\-*()]+", e):
+        return None
+    if e.count("**") > 1 or "**" in e.replace("**2", ""):
+        return None
+    try:
+        return eval(e, {"__builtins__": {}}, {"x": x})
+    except Exception:
+        return None
+    
 def diagnose(q, ans):
     a, b = parse(q)
     return get_model().predict([features(q, norm(ans), a, b)])[0]
@@ -66,9 +92,15 @@ st.title("Re:Learn - Algebra Misconception Tutor")
 
 # Learner model in the sidebar
 st.sidebar.header("Learner history")
+if not s.history:
+    st.sidebar.caption("No mistakes yet. Your progress will appear here.")
 for lab, rec in s.history.items():
-    st.sidebar.write(f"{LABEL_NAMES[lab]}: seen {rec['seen']}x, resolved {rec['resolved']}x")
-
+    st.sidebar.write(f"**{LABEL_NAMES[lab]}**")
+    st.sidebar.progress(min(rec["resolved"] / rec["seen"], 1.0))
+    st.sidebar.caption(f"seen {rec['seen']}x, resolved {rec['resolved']}x")
+    if rec["seen"] >= 2 and rec["resolved"] < rec["seen"]:
+        st.sidebar.warning("Recurring habit! Worth extra practice.")
+        
 if s.stage == "input":
     q = st.selectbox("Expand this expression:", QUESTIONS)
     ans = st.text_input("Your answer (example: 2x+6)")
@@ -76,8 +108,9 @@ if s.stage == "input":
         if norm(ans) == correct_answer(q):
             s.stage = "correct"
         else:
-            label = diagnose(q, ans)
+            label, conf = diagnose_conf(q, ans)
             s.q, s.ans = q, ans
+            s.conf = conf
             if label == "correct":
                 s.stage = "unknown"
             else:
@@ -103,7 +136,25 @@ elif s.stage == "unknown":
 elif s.stage == "lesson":
     st.error(f"Your answer {s.ans} is not correct.")
     st.subheader(f"Diagnosis: {LABEL_NAMES[s.label]}")
+    if s.get("conf") is not None:
+        st.caption(f"Diagnosis confidence: {s.conf}%")
     st.write(LESSONS[s.label])
+
+    st.markdown("#### Test it yourself")
+    x_val = st.number_input("Pick a value for x", value=1, step=1)
+    orig = evaluate(s.q, x_val)
+    mine = evaluate(s.ans, x_val)
+    good = evaluate(correct_answer(s.q), x_val)
+    show = lambda v: "?" if v is None else v
+    c1, c2, c3 = st.columns(3)
+    c1.metric(f"Original {s.q}", show(orig))
+    c2.metric("Your answer", show(mine))
+    c3.metric("Correct answer", show(good))
+    if orig is not None and mine is not None:
+        if orig == mine:
+            st.info("They match at this x. Try another value, because one match doesn't prove an answer is right.")
+        else:
+            st.error("Your answer gives a different number from the original, so they can't be equal.")
     if st.button("I'm ready for the retest"):
         s.stage = "retest"
         st.rerun()
