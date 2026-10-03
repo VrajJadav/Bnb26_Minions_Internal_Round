@@ -48,6 +48,20 @@ def train(df):
 def diagnose(model, q, ans, a, b):
     return model.predict([features(q, ans, a, b)])[0]
 
+def diagnose_detailed(model, q, ans, a, b):
+    """Returns all labels ranked by probability, e.g. [('square_each_term', 0.93), ...]"""
+    probs = model.predict_proba([features(q, ans.replace(" ", ""), a, b)])[0]
+    return sorted(zip(model.classes_, probs), key=lambda x: -x[1])
+
+def explain(label, a, b):
+    """A plain-language 'why we think this' line for each misconception."""
+    return {
+        "distribute_first_only": f"You multiplied only the first term by {a}. The {b} should also be multiplied: {a} x {b} = {a*b}.",
+        "ignore_minus_sign": f"Your last term is +{a*b}, but the minus sign should make it -{a*b}.",
+        "square_each_term": f"You squared {b} to get {b*b} but missed the middle term {2*b}x that comes from multiplying everything by everything.",
+        "multiply_by_two": f"Your answer looks like 2(x+{b}), but squaring means (x+{b}) times (x+{b}), not doubling.",
+    }.get(label, "")
+
 if __name__ == "__main__":
     df = build_data()
     train_df, test_df = train_test_split(df, test_size=0.2, random_state=0)
