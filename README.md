@@ -1,34 +1,376 @@
-[README.md](https://github.com/user-attachments/files/33016749/README.md)
-# Re:Learn - Algebra Misconception Tutor
+# 🧠 Re:Learn
 
-Bit N Build (GDG FRCRCE) - AI/ML Problem Statement 3
+### Learn from the mistake, not just the answer.
 
-## What it does
-Instead of marking an answer "wrong", Re:Learn diagnoses WHICH misconception
-caused it, shows a targeted lesson, then retests the student. A misconception
-is marked resolved only when all 3 new retest questions are answered correctly.
+**Re:Learn** is an interactive algebra learning application built with **Python and Streamlit**. Instead of simply marking an answer as right or wrong, Re:Learn identifies the **misconception behind an incorrect answer**, explains what went wrong, and gives the learner targeted questions to prove that the concept has been understood.
 
-## Misconceptions covered (expanding brackets)
-1. Distributing to only the first term: 2(x+3) -> 2x+3
-2. Ignoring the minus sign: 2(x-3) -> 2x+6
-3. Squaring each term separately: (x+3)^2 -> x^2+9
-4. Treating a square as "multiply by 2": (x+3)^2 -> 2x+6
+---
 
-## How it works
-- model.py: generates labelled wrong answers with code, trains a random forest,
-  prints accuracy and a confusion matrix
-- unseen.py: hides one misconception from training to test generalisation
-- app.py: Streamlit app (diagnosis, lesson, retest, learner history)
+## 🎯 Problem
 
-## Install
-pip3 install pandas scikit-learn streamlit
+Traditional learning systems often tell students:
 
-## Run
-python3 model.py
-python3 -m streamlit run app.py
+> ❌ Wrong answer.
 
-## Limitations
-- Data is synthetic, so accuracy is higher than it would be on real student work
-- The model can only name misconceptions it was trained on
-- Only one topic (expanding brackets) is covered
-- Future work: test on real student answers and add an "unknown" option
+But they don't always explain **why** the answer was wrong.
+
+For example:
+
+```text
+2(x + 3)
+
+Student: 2x + 3
+Correct:  2x + 6
+```
+
+The important information is not just that the answer is incorrect.
+
+The student has made a specific misconception:
+
+**"Only distributing to the first term."**
+
+Re:Learn focuses on identifying and fixing that misconception.
+
+---
+
+## 💡 Solution
+
+Re:Learn follows a simple learning loop:
+
+```text
+              ┌─────────────────┐
+              │     PRACTICE    │
+              │                 │
+              │ Choose /        │
+              │ Generate /      │
+              │ Write question  │
+              └────────┬────────┘
+                       │
+                       ▼
+              ┌─────────────────┐
+              │  SOLVE QUESTION │
+              │                 │
+              │ Student submits │
+              │ an answer       │
+              └────────┬────────┘
+                       │
+                ┌──────┴──────┐
+                │             │
+             Correct        Wrong
+                │             │
+                ▼             ▼
+        ┌─────────────┐ ┌─────────────────┐
+        │   PROGRESS  │ │   DIAGNOSE      │
+        │    SAVED    │ │   MISCONCEPTION │
+        └─────────────┘ └────────┬────────┘
+                                 │
+                                 ▼
+                       ┌─────────────────┐
+                       │    EXPLAIN      │
+                       │   THE MISTAKE   │
+                       └────────┬────────┘
+                                │
+                                ▼
+                       ┌─────────────────┐
+                       │  3-QUESTION     │
+                       │     RETEST       │
+                       └────────┬────────┘
+                                │
+                         ┌──────┴──────┐
+                         │             │
+                       3/3           < 3/3
+                         │             │
+                         ▼             ▼
+                  ┌────────────┐ ┌────────────┐
+                  │   CONCEPT  │ │   RETRY /  │
+                  │  RESOLVED  │ │   LEARN    │
+                  └────────────┘ └──────┬─────┘
+                                        │
+                                        └──────► Retest
+```
+
+---
+
+## ✨ Features
+
+### 📚 Multiple Practice Modes
+
+Users can practice through:
+
+- **Question Bank**
+- **Generated Questions**
+- **Practice Weak Areas**
+- **Write My Own Question**
+
+The application supports algebra expressions such as:
+
+```text
+2(x+3)
+5(x-4)
+(x+3)^2
+```
+
+Questions can also be generated specifically around a learner's previously identified misconception.
+
+---
+
+### 🔍 Misconception Diagnosis
+
+When an answer is incorrect, Re:Learn doesn't stop at "wrong."
+
+It analyzes the response and identifies errors such as:
+
+- Only distributing to the first term
+- Losing the minus sign
+- Missing the middle term when squaring
+- Treating a square like multiplication by 2
+- Dropping the variable
+- Wrong coefficient
+- Wrong constant
+- Extra square term
+- Incorrect or unreadable expressions
+
+The engine contains both deterministic checks and structured misconception categories.
+
+---
+
+### 🧑‍🏫 Step-by-Step Explanation
+
+After diagnosing a mistake, Re:Learn explains the mathematical step that caused the error.
+
+For example:
+
+```text
+2(x + 3)
+
+2 × x = 2x
+2 × 3 = 6
+
+Therefore:
+
+2(x + 3) = 2x + 6
+```
+
+The explanation engine provides worked steps for distribution, negative signs, and squaring expressions.
+
+---
+
+### 🎯 Targeted Retesting
+
+After a misconception is identified, Re:Learn generates **three fresh questions based on the same misconception**.
+
+The learner must answer all three correctly to mark the concept as resolved.
+
+```text
+Mistake
+   ↓
+Explanation
+   ↓
+3 Targeted Questions
+   ↓
+ ┌───────────────┐
+ │     3 / 3     │ ──► Concept Resolved ✓
+ └───────────────┘
+        │
+        └──────────► Otherwise → Keep Practicing
+```
+
+The app records a resolution only when all three retest questions are answered correctly.
+
+---
+
+### 📊 Progress Tracking
+
+Re:Learn stores learning activity locally and tracks:
+
+- Total attempts
+- Correct answers
+- Accuracy
+- Resolved misconceptions
+- Current streak
+- Attempts per misconception
+- Resolution rate
+
+This allows the learner to see **what they are improving at and where they still struggle**.
+
+---
+
+## 🏗️ Architecture
+
+```text
+                    ┌──────────────────┐
+                    │    Streamlit UI  │
+                    │      app.py      │
+                    └────────┬─────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              │              │              │
+              ▼              ▼              ▼
+       ┌────────────┐ ┌────────────┐ ┌────────────┐
+       │   ui.py    │ │  engine.py │ │   db.py    │
+       │             │ │            │ │            │
+       │ UI / Theme  │ │ Algebra &  │ │ Persistence │
+       │ Components  │ │ Diagnosis  │ │ & Progress  │
+       └────────────┘ └────────────┘ └──────┬─────┘
+                                            │
+                                            ▼
+                                    ┌──────────────┐
+                                    │  relearn.db  │
+                                    │    SQLite    │
+                                    └──────────────┘
+```
+
+### File Structure
+
+```text
+ReLearn/
+│
+├── app.py          # Main Streamlit application and navigation
+├── engine.py       # Algebra engine, answer checking and diagnosis
+├── db.py           # SQLite database and progress tracking
+├── ui.py           # UI components and custom styling
+├── relearn.db      # Local SQLite database
+└── README.md       # Project documentation
+```
+
+The main application connects the database, learning engine, and UI modules together.
+
+---
+
+## 🧠 How Answer Checking Works
+
+Re:Learn normalizes student answers and evaluates mathematical equivalence.
+
+Instead of relying only on string comparison, the engine evaluates expressions for multiple values of `x`.
+
+```text
+Student Answer
+      │
+      ▼
+Normalize Expression
+      │
+      ▼
+Evaluate for multiple x values
+      │
+      ▼
+Compare with Correct Expression
+      │
+ ┌────┴────┐
+ │         │
+Same      Different
+ │         │
+ ▼         ▼
+Correct   Diagnose
+```
+
+This allows mathematically equivalent expressions to be accepted even if they are written differently. 
+
+---
+
+## 🤖 Machine Learning Component
+
+The project also contains a **Random Forest classifier** for misconception classification.
+
+Training data is generated synthetically for different algebra mistake categories, and the model uses features such as:
+
+- Question type
+- Coefficient
+- Constant
+- Presence of `x²`
+- Sign information
+- Expected coefficient/constant relationships
+
+The Random Forest is configured with **160 estimators**, balanced class weights, and a maximum depth of 12.
+
+The current application primarily uses the rule-based explanation/diagnosis pipeline for producing the learner-facing explanation.
+
+---
+
+## 🗄️ Database
+
+Re:Learn uses **SQLite** for local persistence.
+
+The database contains:
+
+### `users`
+
+Stores learner profiles.
+
+### `attempts`
+
+Stores:
+
+```text
+Question
+User Answer
+Correct Answer
+Misconception
+Confidence
+Correct / Incorrect
+Timestamp
+```
+
+### `resolutions`
+
+Stores misconceptions successfully resolved through retesting.
+
+---
+
+## 🎨 User Interface
+
+The interface is built using **Streamlit** with a custom CSS theme.
+
+The UI includes:
+
+- Learner profile
+- Home dashboard
+- Practice interface
+- Answer checking
+- Misconception diagnosis
+- Retest screen
+- Progress dashboard
+- Responsive styling
+
+The design uses a graph-paper inspired theme with custom cards, buttons, mathematical typography, and learning progress components.
+
+---
+
+## 🛠️ Tech Stack
+
+| Technology | Purpose |
+|---|---|
+| Python | Core application |
+| Streamlit | Interactive web UI |
+| SQLite | Local data storage |
+| Pandas | Training data generation |
+| Scikit-learn | Random Forest classifier |
+| HTML/CSS | Custom interface styling |
+
+---
+
+## 🚀 Installation
+
+### 1. Clone the repository
+
+```bash
+git clone <your-repository-url>
+cd ReLearn
+```
+
+### 2. Install dependencies
+
+```bash
+pip install streamlit pandas scikit-learn
+```
+
+### 3. Run the application
+
+```bash
+streamlit run app.py
+```
+
+The application will open in your browser.
+
+---
+
+## 🎮
