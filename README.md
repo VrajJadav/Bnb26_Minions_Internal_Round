@@ -212,7 +212,7 @@ This allows the learner to see **what they are improving at and where they still
 
 ### 🔍 Wrong Answer Explanation
 
-<img width="662" height="508" alt="Screenshot 2026-10-04 123827" src="https://github.com/user-attachments/assets/d3cdf6e9-489d-4ece-b943-0b87640700d5" />
+<img width="762" height="568" alt="Screenshot 2026-10-04 123827" src="https://github.com/user-attachments/assets/d3cdf6e9-489d-4ece-b943-0b87640700d5" />
 
 
 ---
