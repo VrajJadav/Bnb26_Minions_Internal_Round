@@ -73,7 +73,7 @@ Re:Learn follows a simple learning loop:
                                 ▼
                        ┌─────────────────┐
                        │  3-QUESTION     │
-                       │     RETEST       │
+                       │     RETEST      │
                        └────────┬────────┘
                                 │
                          ┌──────┴──────┐
@@ -195,6 +195,28 @@ This allows the learner to see **what they are improving at and where they still
 
 ---
 
+## 📸 Application Screenshots
+
+### 🏠 Home Page
+
+<img width="859" height="400" alt="Screenshot 2026-10-04 123747" src="https://github.com/user-attachments/assets/f431ab92-2e9e-4f84-b16b-4ca10fe32c0d" />
+
+
+---
+
+### 📝 Practice Page
+
+<img width="859" height="407" alt="Screenshot 2026-10-04 123800" src="https://github.com/user-attachments/assets/88c73d5f-758b-490e-bc69-99387debacb9" />
+
+---
+
+### 🔍 Wrong Answer Explanation
+
+<img width="462" height="408" alt="Screenshot 2026-10-04 123827" src="https://github.com/user-attachments/assets/d3cdf6e9-489d-4ece-b943-0b87640700d5" />
+
+
+---
+
 ## 🏗️ Architecture
 
 ```text
@@ -208,9 +230,9 @@ This allows the learner to see **what they are improving at and where they still
               ▼              ▼              ▼
        ┌────────────┐ ┌────────────┐ ┌────────────┐
        │   ui.py    │ │  engine.py │ │   db.py    │
-       │             │ │            │ │            │
-       │ UI / Theme  │ │ Algebra &  │ │ Persistence │
-       │ Components  │ │ Diagnosis  │ │ & Progress  │
+       │            │ │            │ │            │
+       │ UI / Theme │ │ Algebra &  │ │ Persistence│
+       │ Components │ │ Diagnosis  │ │ & Progress │
        └────────────┘ └────────────┘ └──────┬─────┘
                                             │
                                             ▼
@@ -220,7 +242,9 @@ This allows the learner to see **what they are improving at and where they still
                                     └──────────────┘
 ```
 
-### File Structure
+---
+
+## 📁 File Structure
 
 ```text
 ReLearn/
@@ -230,10 +254,13 @@ ReLearn/
 ├── db.py           # SQLite database and progress tracking
 ├── ui.py           # UI components and custom styling
 ├── relearn.db      # Local SQLite database
-└── README.md       # Project documentation
+├── README.md       # Project documentation
+│
+└── images/
+    ├── home.png
+    ├── practice.png
+    └── explanation.png
 ```
-
-The main application connects the database, learning engine, and UI modules together.
 
 ---
 
@@ -263,7 +290,7 @@ Same      Different
 Correct   Diagnose
 ```
 
-This allows mathematically equivalent expressions to be accepted even if they are written differently. 
+This allows mathematically equivalent expressions to be accepted even if they are written differently.
 
 ---
 
@@ -331,8 +358,6 @@ The UI includes:
 - Progress dashboard
 - Responsive styling
 
-The design uses a graph-paper inspired theme with custom cards, buttons, mathematical typography, and learning progress components.
-
 ---
 
 ## 🛠️ Tech Stack
@@ -342,7 +367,6 @@ The design uses a graph-paper inspired theme with custom cards, buttons, mathema
 | Python | Core application |
 | Streamlit | Interactive web UI |
 | SQLite | Local data storage |
-| Pandas | Training data generation |
 | Scikit-learn | Random Forest classifier |
 | HTML/CSS | Custom interface styling |
 
@@ -373,4 +397,120 @@ The application will open in your browser.
 
 ---
 
-## 🎮
+## 🎮 Demo Flow
+
+For a quick demonstration:
+
+```text
+1. Create Profile
+       ↓
+2. Go to Practice
+       ↓
+3. Choose a question
+       ↓
+4. Enter an incorrect answer
+       ↓
+5. Re:Learn identifies the misconception
+       ↓
+6. Read the explanation
+       ↓
+7. Start 3-question retest
+       ↓
+8. Resolve the misconception
+       ↓
+9. View progress
+```
+
+---
+
+## 🧪 Example Demo
+
+Try:
+
+```text
+Question:
+2(x+3)
+
+Wrong answer:
+2x+3
+```
+
+Re:Learn identifies:
+
+```text
+Only distributing to the first term
+```
+
+Then it explains:
+
+```text
+2 × x = 2x
+2 × 3 = 6
+
+Correct answer:
+2x + 6
+```
+
+Finally, it generates three similar questions to check whether the learner has actually understood the concept.
+
+---
+
+## 🌟 What Makes Re:Learn Different?
+
+Most educational systems follow:
+
+```text
+Question → Answer → Right/Wrong
+```
+
+Re:Learn follows:
+
+```text
+Question
+   ↓
+Answer
+   ↓
+Understand WHY
+   ↓
+Identify Misconception
+   ↓
+Explain
+   ↓
+Targeted Practice
+   ↓
+Retest
+   ↓
+Concept Mastery
+```
+
+**The goal isn't just to get the current question right.**
+
+**The goal is to fix the underlying misconception.**
+
+---
+
+## 🔮 Future Scope
+
+Possible future improvements include:
+
+- More algebra topics
+- More sophisticated misconception detection
+- Larger training datasets
+- Adaptive difficulty
+- Personalized learning paths
+- Teacher dashboards
+- Cloud-based learner profiles
+- More detailed learning analytics
+- Support for additional mathematical notation
+
+---
+
+## 👥 Project
+
+**Re:Learn — An Adaptive Algebra Learning Assistant**
+
+Built to demonstrate how learning systems can move beyond simply detecting incorrect answers and instead help learners understand and correct the reasoning behind their mistakes.
+
+---
+
+### Made with ❤️, Python, and a lot of algebra.
